@@ -45,10 +45,10 @@ def criarColunas(numFatores):
     columns = []
     numColumns = 2**numFatores
     columns.append([1 for x in range(numColumns)])
-    metade = numColumns//2
+    metade = 1
     for i in range(numFatores):
         c= []
-        um = 1
+        um = -1
         atingiu_metade = 0
         for j in range(numColumns):
             c.append(um)
@@ -57,7 +57,7 @@ def criarColunas(numFatores):
                 um = um*-1
                 atingiu_metade = 0
         columns.append(c)
-        metade = metade//2
+        metade = metade*2
     return columns
 
 def criarTabela(numFatores):
