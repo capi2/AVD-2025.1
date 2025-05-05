@@ -129,13 +129,13 @@ def calcularResultados(tabela, numFatores, numReplicacoes):
         SSE += sum([e**2 for e in col])
     
     efeitos = [x**2 for x in polinomio[1:]]
-    SST = numCols*sum(efeitos) + SSE
+    SST = numCols*numReplicacoes*sum(efeitos) + SSE
     
     nomeColunas = [x for x in tabela.columns[1:numCols]]
     resultados = {}
     for i in range(len(nomeColunas)):
         res = 0
-        res = numCols*efeitos[i]/SST
+        res = numCols*numReplicacoes*efeitos[i]/SST
         resultados[nomeColunas[i]] = res*100
     
     return resultados, SST, SSE
