@@ -41,6 +41,7 @@ def calcular(taxa_entrada, taxa_servico, d, confianca):
                 parar_simulacao = True
     print(f"\tResultado para {clientes} clientes!")
     print(f"Tempo medio de espera: {tempo_medio_espera}")
+    print(f"Largura intervalo de confiança {largura}")
     return tempo_medio_espera, clientes
 
 def simular():
