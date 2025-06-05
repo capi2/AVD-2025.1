@@ -1,6 +1,5 @@
 import numpy as np
 from scipy import stats
-import matplotlib.pyplot as plt
 
 def analisar(num_clientes, tempos_espera, confianca):
     tempo_medio_espera = np.mean(tempos_espera)
@@ -11,8 +10,9 @@ def analisar(num_clientes, tempos_espera, confianca):
     limite_superior = float(tempo_medio_espera + z * s/np.sqrt(num_clientes))
     limite_inferior = float(tempo_medio_espera - z * s/np.sqrt(num_clientes))
     largura_intervalo_confianca = limite_superior - limite_inferior
+    h = largura_intervalo_confianca/2
 
-    return tempo_medio_espera, largura_intervalo_confianca, limite_inferior, limite_superior
+    return tempo_medio_espera, h, limite_inferior, limite_superior
 
 def calcular(taxa_entrada, taxa_servico, confianca, precisao_relativa):
     tempo_chegada_relogio = 0
@@ -36,8 +36,8 @@ def calcular(taxa_entrada, taxa_servico, confianca, precisao_relativa):
         tempo_final_servico = tempo_inicio_servico + tempo_servico
 
         if clientes >= 30:
-            tempo_medio_espera, largura, lim_inf, lim_sup = analisar(clientes, tempos_espera, confianca)
-            if largura/tempo_medio_espera <= precisao_relativa:
+            tempo_medio_espera, h, lim_inf, lim_sup = analisar(clientes, tempos_espera, confianca)
+            if h/tempo_medio_espera <= precisao_relativa:
                 parar_simulacao = True
     return tempo_medio_espera, clientes, lim_inf, lim_sup
 
