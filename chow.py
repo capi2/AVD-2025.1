@@ -11,8 +11,8 @@ def analisar(num_clientes, tempos_espera, confianca):
     limite_superior = float(tempo_medio_espera + z * s/np.sqrt(num_clientes))
     limite_inferior = float(tempo_medio_espera - z * s/np.sqrt(num_clientes))
     largura_intervalo_confianca = limite_superior - limite_inferior
-
-    return tempo_medio_espera, largura_intervalo_confianca
+    h = largura_intervalo_confianca/2
+    return tempo_medio_espera, h
 
 def calcular(taxa_entrada, taxa_servico, d, confianca):
     tempo_chegada_relogio = 0
@@ -36,12 +36,12 @@ def calcular(taxa_entrada, taxa_servico, d, confianca):
         tempo_final_servico = tempo_inicio_servico + tempo_servico
 
         if clientes >= 30:
-            tempo_medio_espera, largura = analisar(clientes, tempos_espera, confianca)
-            if largura <= 2*d:
+            tempo_medio_espera, h = analisar(clientes, tempos_espera, confianca)
+            if h <= 2*d:
                 parar_simulacao = True
     print(f"\tResultado para {clientes} clientes!")
     print(f"Tempo medio de espera: {tempo_medio_espera}")
-    print(f"Largura intervalo de confiança {largura}")
+    print(f"H = {h}")
     return tempo_medio_espera, clientes
 
 def simular():
