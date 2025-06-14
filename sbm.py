@@ -43,7 +43,7 @@ def eliminar_transiente_mser(tempos):
 def simular():
     taxa_entrada = [7, 8, 9, 9.5]
     taxa_servico = 10
-    n_clientes = 10000
+    n_clientes = 1000
     confianca = 0.95
     precisao = 0.05
     B = 20
@@ -64,13 +64,14 @@ def simular():
         teste_passou = False
         M = 5
         while not teste_passou:
+            S = 1
             if M < len(tempos_espera):
                 lista_y = []
                 bloco = []
                 for i in range(len(tempos_espera)):
                     bloco.append(tempos_espera[i])
                     if(len(bloco) == M):
-                        lista_y.append(np.mean(bloco))
+                        lista_y.append(np.mean(bloco[:len(bloco)-S]))
                         bloco = []
                 lista_ri = []
                 for i in range(len(lista_y)):
@@ -136,7 +137,4 @@ def simular():
     plt.tight_layout()
     plt.show()
 
-
-
 simular()
-
