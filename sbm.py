@@ -43,7 +43,7 @@ def eliminar_transiente_mser(tempos):
 def simular():
     taxa_entrada = [7, 8, 9, 9.5]
     taxa_servico = 10
-    n_clientes = 1000
+    n_clientes = 10000
     confianca = 0.95
     precisao = 0.05
     B = 20
@@ -64,7 +64,7 @@ def simular():
         teste_passou = False
         M = 5
         while not teste_passou:
-            S = 1
+            S = int(M/10)
             if M < len(tempos_espera):
                 lista_y = []
                 bloco = []
@@ -132,7 +132,7 @@ def simular():
 
     plt.ylabel("Tempo médio de espera")
     plt.xlabel("Taxa de chegada (λ)")
-    plt.title("Resultados para o método NBM")
+    plt.title("Resultados para o método SBM")
     plt.legend()
     plt.tight_layout()
     plt.show()
