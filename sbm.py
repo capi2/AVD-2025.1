@@ -14,7 +14,20 @@ def calcular(num_clientes, taxa_entrada, taxa_servico):
         tempo_inicio_servico = max(tempo_chegada_relogio, tempo_final_servico)
         tempo_servico = np.random.exponential(1/taxa_servico)
         tempo_final_servico = tempo_inicio_servico + tempo_servico
-    return tempos_espera
+    return tempos_espera, tempo_chegada_relogio, tempo_final_servico
+
+def adicionar_observacoes(tempos_espera, clientes_adicionais, taxa_entrada, taxa_servico, tempo_chegada_relogio, tempo_final_servico):
+    novos_tempos_espera = np.zeros(clientes_adicionais)
+    for i in range(clientes_adicionais):
+        tc = np.random.exponential(1/taxa_entrada)
+        tempo_chegada_relogio += tc
+        if tempo_chegada_relogio < tempo_final_servico:
+            novos_tempos_espera[i] = tempo_final_servico - tempo_chegada_relogio
+        tempo_inicio_servico = max(tempo_chegada_relogio, tempo_final_servico)
+        tempo_servico = np.random.exponential(1/taxa_servico)
+        tempo_final_servico = tempo_inicio_servico + tempo_servico
+    print(f"{clientes_adicionais} Clientes adicionados para {taxa_entrada} clientes por segundo!")
+    return np.concatenate([tempos_espera, novos_tempos_espera]), tempo_chegada_relogio, tempo_final_servico
 
 def eliminar_transiente_mser(tempos):
     lista_z = []
@@ -43,11 +56,9 @@ def eliminar_transiente_mser(tempos):
 def simular():
     taxa_entrada = [7, 8, 9, 9.5]
     taxa_servico = 10
-    n_clientes = 10000
+    n_clientes = 1000
     confianca = 0.95
     precisao = 0.05
-    B = 20
-    beta = 1.44
     lista_valor_esperado = []
 
     for clientes_por_segundo in taxa_entrada:
@@ -59,61 +70,35 @@ def simular():
     lista_tempo_medio = []
     lista_intervalo_confianca = []
     for clientes_por_segundo in taxa_entrada:
-        tempos_espera = calcular(n_clientes, clientes_por_segundo, taxa_servico)
+        tempos_espera, tempo_chegada_relogio, tempo_final_servico = calcular(n_clientes, clientes_por_segundo, taxa_servico)
         tempos_espera = eliminar_transiente_mser(tempos_espera)
         teste_passou = False
         M = 5
         while not teste_passou:
-            S = int(M/10)
-            if M < len(tempos_espera):
-                lista_y = []
-                bloco = []
-                for i in range(len(tempos_espera)):
-                    bloco.append(tempos_espera[i])
-                    if(len(bloco) == M):
-                        lista_y.append(np.mean(bloco[:len(bloco)-S]))
-                        bloco = []
-                lista_ri = []
-                for i in range(len(lista_y)):
-                    ri = lista_y[i]
-                    qtde_ri = 0
-                    for j in range(len(lista_y)):
-                        if(lista_y[j] <= ri and i != j):
-                            qtde_ri += 1
-                    lista_ri.append(qtde_ri)
-                r_medio = np.sum(lista_ri)/B
-                var_r = [(r-r_medio)**2 for r in lista_ri]
-                acum = 0
-                for k in range(len(lista_ri)-1):
-                    acum += (lista_ri[k]-lista_ri[k+1])**2
-                soma_var_r = np.sum(var_r)
-                if soma_var_r == 0:
-                    M += 1
-                    continue
-                RVN = acum/soma_var_r
-                if RVN < beta:
-                    media_global = np.mean(lista_y)
-                    z = stats.norm.ppf((1 + confianca) / 2)
-                    s = np.std(lista_y, ddof=1)
-
-                    limite_superior = float(media_global + z * s/np.sqrt(len(lista_y)))
-                    limite_inferior = float(media_global - z * s/np.sqrt(len(lista_y)))
-                    largura_intervalo_confianca = limite_superior - limite_inferior
-                    h = largura_intervalo_confianca/2
-                    if h/media_global <= precisao:
-                        lista_tempo_medio.append(media_global)
-                        lista_intervalo_confianca.append((limite_inferior,limite_superior))
-                        M = 5
-                        teste_passou = True
-                    else:
-                        M += 1
-                else:
-                    M += 1
-            else:
-                print(f"simulacao fracassou com {clientes_por_segundo} clientes! gerando novos dados...")
+            S = 1
+            lista_y = []
+            bloco = []
+            for i in range(len(tempos_espera)):
+                bloco.append(tempos_espera[i])
+                if(len(bloco) == M):
+                    lista_y.append(np.mean(bloco[:len(bloco)-S]))
+                    bloco = []
+            media_global = np.mean(lista_y)
+            z = stats.norm.ppf((1 + confianca) / 2)
+            s = np.std(lista_y, ddof=1)
+            limite_superior = float(media_global + z * s/np.sqrt(len(lista_y)))
+            limite_inferior = float(media_global - z * s/np.sqrt(len(lista_y)))
+            largura_intervalo_confianca = limite_superior - limite_inferior
+            h = largura_intervalo_confianca/2
+            if h/media_global <= precisao:
+                lista_tempo_medio.append(media_global)
+                lista_intervalo_confianca.append((limite_inferior,limite_superior))
                 M = 5
-                tempos_espera = calcular(n_clientes, clientes_por_segundo, taxa_servico)
-                tempos_espera = eliminar_transiente_mser(tempos_espera)
+                teste_passou = True                
+            else:
+                M += 1
+                tempos_espera, tempo_chegada_relogio, tempo_final_servico = adicionar_observacoes(tempos_espera, len(lista_y)*M, clientes_por_segundo, taxa_servico, tempo_chegada_relogio, tempo_final_servico)
+
     print(lista_tempo_medio)
     print(lista_intervalo_confianca)
 
@@ -133,7 +118,6 @@ def simular():
     plt.ylabel("Tempo médio de espera")
     plt.xlabel("Taxa de chegada (λ)")
     plt.title("Resultados para o método SBM")
-    plt.legend()
     plt.tight_layout()
     plt.show()
 
