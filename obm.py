@@ -59,6 +59,8 @@ def simular():
     n_clientes = 1000
     confianca = 0.95
     precisao = 0.05
+    B = 20
+    beta = 1.44
     lista_valor_esperado = []
 
     for clientes_por_segundo in taxa_entrada:
@@ -79,33 +81,59 @@ def simular():
             bloco = []
             inicio = 0
             fim = M
-            for i in range(len(tempos_espera)-M+1):
-                for j in range(inicio,fim):
-                    bloco.append(tempos_espera[j])
-                    if(len(bloco) == M):
-                        lista_y.append(np.mean(bloco))
-                        bloco = []
-                        inicio += 1
-                        fim += 1
-            media_global = np.mean(lista_y)
-            var = np.var(lista_y)
-            b = len(lista_y)
-            df = b - 1
-            alpha = 1 - confianca
-            t_value = t.ppf(1 - alpha/2, df)
-            limite_superior = float(media_global + t_value * np.sqrt(var/len(lista_y)))
-            limite_inferior = float(media_global - t_value * np.sqrt(var/len(lista_y)))
-            largura_intervalo_confianca = limite_superior - limite_inferior
-            h = largura_intervalo_confianca/2
-            if h/media_global <= precisao:
-                lista_tempo_medio.append(media_global)
-                lista_intervalo_confianca.append((limite_inferior,limite_superior))
-                M = 5
-                teste_passou = True
+            N = B*M
+            if N <= len(tempos_espera):
+                for i in range(len(tempos_espera)-M+1):
+                    for j in range(inicio,fim):
+                        bloco.append(tempos_espera[j])
+                        if(len(bloco) == M):
+                            lista_y.append(np.mean(bloco))
+                            bloco = []
+                            inicio += 1
+                            fim += 1
+                lista_ri = []
+                for i in range(len(lista_y)):
+                    ri = lista_y[i]
+                    qtde_ri = 0
+                    for j in range(len(lista_y)):
+                        if(lista_y[j] <= ri and i != j):
+                            qtde_ri += 1
+                    lista_ri.append(qtde_ri)
+                r_medio = np.sum(lista_ri)/B
+                var_r = [(r-r_medio)**2 for r in lista_ri]
+                acum = 0
+                for k in range(len(lista_ri)-1):
+                    acum += (lista_ri[k]-lista_ri[k+1])**2
+                soma_var_r = np.sum(var_r)
+                if soma_var_r == 0:
+                    M += 1
+                    continue
+                RVN = acum/soma_var_r
+                if RVN < beta:
+                    media_global = np.mean(lista_y)
+                    var = np.var(lista_y)
+                    b = len(lista_y)
+                    df = b - 1
+                    alpha = 1 - confianca
+                    t_value = t.ppf(1 - alpha/2, df)
+                    limite_superior = float(media_global + t_value * np.sqrt(var/len(lista_y)))
+                    limite_inferior = float(media_global - t_value * np.sqrt(var/len(lista_y)))
+                    largura_intervalo_confianca = limite_superior - limite_inferior
+                    h = largura_intervalo_confianca/2
+                    if h/media_global <= precisao:
+                        lista_tempo_medio.append(media_global)
+                        lista_intervalo_confianca.append((limite_inferior,limite_superior))
+                        M = 5
+                        teste_passou = True
+                    else:
+                        M += 1
+                        tempos_espera, tempo_chegada_relogio, tempo_final_servico = adicionar_observacoes(tempos_espera, len(lista_y)*M, clientes_por_segundo, taxa_servico, tempo_chegada_relogio, tempo_final_servico)
+                else:
+                    M += 1
             else:
-                M += 1
+                print("Simulacao falhou, nao ha observacoes o suficiente! gerando novos dados...")
                 tempos_espera, tempo_chegada_relogio, tempo_final_servico = adicionar_observacoes(tempos_espera, len(lista_y)*M, clientes_por_segundo, taxa_servico, tempo_chegada_relogio, tempo_final_servico)
-
+                M = 5
     print(lista_tempo_medio)
     print(lista_intervalo_confianca)
 
