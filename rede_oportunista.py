@@ -16,7 +16,7 @@ class No:
 def read_dataset(dataset):
     nos = []
     with open(dataset, "r") as file:
-        print("efetuando leitura de dados do dataset")
+        print("Efetuando leitura de dados do dataset")
         line = file.readline()
         id = "1"
         data = []
@@ -49,7 +49,7 @@ def read_dataset(dataset):
             line = file.readline()
     no = No(id, data, hora, localizacao, bateria, mem_interna)
     nos.append(no)
-    print("dataset lido com sucesso")
+    print("Dataset lido com sucesso")
     file.close()
     return nos
 
@@ -80,7 +80,7 @@ def converter_hora(hora):
     h, m, s = hora.split(':')
     return int(h)*3600 + int(m)*60 + int(s)
     
-def repassar_mensagem(nos, id1, id2, data1, hora1, lat1, lon1, bateria1, tolerancia_tempo, R):
+def repassar_mensagem(nos, id1, id2, data1, hora1, lat1, lon1, bateria1, tolerancia_tempo, R, file):
     id_temp = id1
     data_temp = data1
     hora_temp = hora1
@@ -95,7 +95,7 @@ def repassar_mensagem(nos, id1, id2, data1, hora1, lat1, lon1, bateria1, toleran
         for i in range(nos[j].leituras()):
             lat, lon = nos[j].localizacao[i].split(",")
             if nos[j].data[i] == data_temp and tempo_inicio <= converter_hora(nos[j].hora[i]) and converter_hora(nos[j].hora[i]) <= tempo_final_tolerancia and haversine(lat_temp, lon_temp, float(lat), float(lon)) <= R and id_temp != nos[j].id:
-                print(f"Nó {nos[j].id} disponível! data: {nos[j].data[i]} hora: {nos[j].hora[i]} dist: {haversine(lat_temp, lon_temp, float(lat), float(lon))} | {id_temp} --> {nos[j].id}")
+                file.write(f"Nó {nos[j].id} disponível! data: {nos[j].data[i]} hora: {nos[j].hora[i]} dist: {haversine(lat_temp, lon_temp, float(lat), float(lon))} | {id_temp} --> {nos[j].id}\n")
                 id_temp = nos[j].id
                 data_temp = nos[j].data[i]
                 hora_temp = nos[j].hora[i]
@@ -111,10 +111,9 @@ def repassar_mensagem(nos, id1, id2, data1, hora1, lat1, lon1, bateria1, toleran
                     break
     return False, saltos
 
-def simular(nos, R, D, tolerancia_tempo):
+def simular(nos, R, D, tolerancia_tempo, file):
     linha1 = np.random.randint(1,112555)
     linha2 = np.random.randint(1,112555)
-    print(linha1, linha2)
 
     id1, data1, hora1, localizacao1, bateria1, mem_interna1 = encontrarLinha(nos, linha1)
     id2, data2, hora2, localizacao2, bateria2, mem_interna2 = encontrarLinha(nos, linha2)
@@ -128,30 +127,52 @@ def simular(nos, R, D, tolerancia_tempo):
     lat2 = float(lat2)
     lon2 = float(lon2)
 
-    print(id1, data1, hora1, lat1, lon1, bateria1, mem_interna1)
-    print(id2, data2, hora2, lat2, lon2, bateria2, mem_interna2)
+    file.write(f"Nó 1: {linha1} | {id1, data1, hora1, localizacao1, bateria1, mem_interna1}\n")
+    file.write(f"Nó 2: {linha2} | {id2, data2, hora2, localizacao2, bateria2, mem_interna2}\n")
     dist = haversine(lat1, lon1, lat2, lon2)
-    print(f"Distancia entre os nos {dist}")
+    file.write(f"Distancia entre os nós: {dist} metros\n")
     if dist <= D:
-        print(f"Os nós {id1} e {id2} estão dentro do range de {D} metros para tentar realizar a comunicação!")
+        file.write(f"Os nós {id1} e {id2} estão dentro do range de {D} metros para tentar realizar a comunicação!\n")
         if dist <= R:
-            print(f"Os nós estão dentro do raio de {R} metros e a comunicação foi instântanea!")
+            file.write(f"Os nós estão dentro do raio de {R} metros e a comunicação foi instântanea!\n")
+            return True, 0
         else:
-            sucesso, saltos = repassar_mensagem(nos, id1, id2, data1, hora1, lat1, lon1, bateria1, tolerancia_tempo, R)
+            sucesso, saltos = repassar_mensagem(nos, id1, id2, data1, hora1, lat1, lon1, bateria1, tolerancia_tempo, R, file)
             if sucesso:
-                print(f"Mensagem repassada pela rede com sucesso! Saltos = {saltos}")
+                file.write(f"Mensagem repassada pela rede com sucesso! Saltos = {saltos}\n")
+                return True, saltos
             else:
-                print("Simulação falhou pois não encontrei nenhum nó disponível...")
+                file.write("Simulação falhou pois não encontrei nenhum nó disponível...\n")
+                return False, saltos
     else:
-        print(f"Os nós {id1} e {id2} estão longe demais...")
+        file.write(f"Os nós {id1} e {id2} estão longe demais...\n")
+    return False, 0
+
+def simulacoes(num_simulacoes, nos, R, D, tolerancia_tempo, file):
+    entregas = 0
+    saltos_total = 0
+    for i in range(num_simulacoes):
+        file.write(f"-------------- SIMULAÇÃO {i+1} ------------------\n")
+        sucesso, saltos = simular(nos, R, D, tolerancia_tempo, file)
+        if sucesso:
+            entregas += 1
+        saltos_total += saltos
+        file.write(f"----------------------------------------------\n")
+    file.write("\n---------- RESULTADOS DA SIMULAÇÃO ----------------\n")
+    file.write(f"num simulacoes:  {num_simulacoes} | entregas: {entregas} | taxa entrega: {(entregas/num_simulacoes)*100}% | saltos: {saltos_total} | salto medio: {saltos_total/100}\n")
 
 def main():
     R = 50
-    D = 200
+    D = 500
     tolerancia_tempo = 300
+    num_simulacoes = 100
+    logs = "logs.txt"
     dataset_path = "dataset_final_29.06.25.txt"
-    nos = read_dataset(dataset_path)
 
-    simular(nos, R, D, tolerancia_tempo)
+    nos = read_dataset(dataset_path)
+    with open(logs, "w") as file:
+        simulacoes(num_simulacoes, nos, R, D, tolerancia_tempo, file)
+    file.close()
+    print("Simulação encerrada. Consulte os logs para ver os resultados!")
 
 main()
