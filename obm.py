@@ -127,12 +127,12 @@ def simular():
                         teste_passou = True
                     else:
                         M += 1
-                        tempos_espera, tempo_chegada_relogio, tempo_final_servico = adicionar_observacoes(tempos_espera, len(lista_y)*M, clientes_por_segundo, taxa_servico, tempo_chegada_relogio, tempo_final_servico)
+                        tempos_espera, tempo_chegada_relogio, tempo_final_servico = adicionar_observacoes(tempos_espera, B*M, clientes_por_segundo, taxa_servico, tempo_chegada_relogio, tempo_final_servico)
                 else:
                     M += 1
             else:
                 print("Simulacao falhou, nao ha observacoes o suficiente! gerando novos dados...")
-                tempos_espera, tempo_chegada_relogio, tempo_final_servico = adicionar_observacoes(tempos_espera, len(lista_y)*M, clientes_por_segundo, taxa_servico, tempo_chegada_relogio, tempo_final_servico)
+                tempos_espera, tempo_chegada_relogio, tempo_final_servico = adicionar_observacoes(tempos_espera, B*M, clientes_por_segundo, taxa_servico, tempo_chegada_relogio, tempo_final_servico)
                 M = 5
     print(lista_tempo_medio)
     print(lista_intervalo_confianca)
