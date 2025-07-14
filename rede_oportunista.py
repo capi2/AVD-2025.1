@@ -61,7 +61,7 @@ def haversine(lat1, lon1, lat2, lon2):
     a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
     c = 2 * math.asin(math.sqrt(a)) 
     r = 6371000
-    return c * r
+    return float("{:.2f}".format(c * r))
 
 def encontrarLinha(nos, id_linha):
     i = 0
@@ -102,7 +102,7 @@ def repassar_mensagem_n_egoista(nos, id1, id2, data1, hora1, lat1, lon1, bateria
         for i in range(nos[j].leituras()):
             lat, lon = nos[j].localizacao[i].split(",")
             if nos[j].data[i] == data_temp and tempo_inicio <= converter_hora(nos[j].hora[i]) and converter_hora(nos[j].hora[i]) <= tempo_final_tolerancia and haversine(lat_temp, lon_temp, float(lat), float(lon)) <= R and id_temp != nos[j].id:
-                file.write(f"Nó {nos[j].id} disponível! data: {nos[j].data[i]} hora: {nos[j].hora[i]} dist: {haversine(lat_temp, lon_temp, float(lat), float(lon))} | {id_temp} --> {nos[j].id}\n")
+                file.write(f"Nó {nos[j].id} disponível! data: {nos[j].data[i]} hora: {nos[j].hora[i]} dist: {haversine(lat_temp, lon_temp, float(lat), float(lon))} metros | {id_temp} --> {nos[j].id}\n")
                 id_temp = nos[j].id
                 data_temp = nos[j].data[i]
                 hora_temp = nos[j].hora[i]
@@ -134,7 +134,7 @@ def repassar_mensagem_egoista_sem_prioridade(bat_media, nos, id1, id2, data1, ho
             lat, lon = nos[j].localizacao[i].split(",")
             if nos[j].data[i] == data_temp and tempo_inicio <= converter_hora(nos[j].hora[i]) and converter_hora(nos[j].hora[i]) <= tempo_final_tolerancia and haversine(lat_temp, lon_temp, float(lat), float(lon)) <= R and id_temp != nos[j].id:
                 if int(nos[j].bateria[i]) >= bat_media:
-                    file.write(f"Nó {nos[j].id} disponível! data: {nos[j].data[i]} hora: {nos[j].hora[i]} bateria: {nos[j].bateria[i]} dist: {haversine(lat_temp, lon_temp, float(lat), float(lon))} | {id_temp} --> {nos[j].id}\n")
+                    file.write(f"Nó {nos[j].id} disponível! data: {nos[j].data[i]} hora: {nos[j].hora[i]} bateria: {nos[j].bateria[i]}% dist: {haversine(lat_temp, lon_temp, float(lat), float(lon))} metros | {id_temp} --> {nos[j].id}\n")
                     id_temp = nos[j].id
                     data_temp = nos[j].data[i]
                     hora_temp = nos[j].hora[i]
@@ -149,7 +149,7 @@ def repassar_mensagem_egoista_sem_prioridade(bat_media, nos, id1, id2, data1, ho
                         j = 0
                         break
                 else:
-                    file.write(f"Nó {nos[j].id} recusou repassar a mensagem! Motivo: Bateria = {nos[j].bateria[i]}\n")
+                    file.write(f"Nó {nos[j].id} recusou repassar a mensagem! Motivo: Bateria = {nos[j].bateria[i]}%\n")
     return False, saltos
 
 def repassar_mensagem_egoista_com_prioridade(bat_media, nos, id1, id2, data1, hora1, lat1, lon1, bateria1, tolerancia_tempo, R, file, prioridade):
@@ -168,7 +168,7 @@ def repassar_mensagem_egoista_com_prioridade(bat_media, nos, id1, id2, data1, ho
             lat, lon = nos[j].localizacao[i].split(",")
             if nos[j].data[i] == data_temp and tempo_inicio <= converter_hora(nos[j].hora[i]) and converter_hora(nos[j].hora[i]) <= tempo_final_tolerancia and haversine(lat_temp, lon_temp, float(lat), float(lon)) <= R and id_temp != nos[j].id:
                 if int(nos[j].bateria[i]) >= bat_media:
-                    file.write(f"Nó {nos[j].id} disponível! data: {nos[j].data[i]} hora: {nos[j].hora[i]} bateria: {nos[j].bateria[i]} dist: {haversine(lat_temp, lon_temp, float(lat), float(lon))} Prioridade da mensagem: {prioridade} | {id_temp} --> {nos[j].id}\n")
+                    file.write(f"Nó {nos[j].id} disponível! data: {nos[j].data[i]} hora: {nos[j].hora[i]} bateria: {nos[j].bateria[i]}% dist: {haversine(lat_temp, lon_temp, float(lat), float(lon))} metros | Prioridade da mensagem: [{prioridade}] | {id_temp} --> {nos[j].id}\n")
                     id_temp = nos[j].id
                     data_temp = nos[j].data[i]
                     hora_temp = nos[j].hora[i]
@@ -184,9 +184,9 @@ def repassar_mensagem_egoista_com_prioridade(bat_media, nos, id1, id2, data1, ho
                         break
                 else:
                     if prioridade == "normal":
-                        file.write(f"Nó {nos[j].id} recusou repassar a mensagem! Motivo: Bateria = {nos[j].bateria[i]} Prioridade da mensagem: {prioridade}\n")
+                        file.write(f"Nó {nos[j].id} recusou repassar a mensagem! Motivo: Bateria = {nos[j].bateria[i]}% Prioridade da mensagem: [{prioridade}]\n")
                     else:
-                        file.write(f"Nó {nos[j].id} forçadamente repassou a mensagem! Motivo: Bateria = {nos[j].bateria[i]} Prioridade da mensagem: {prioridade} data: {nos[j].data[i]} hora: {nos[j].hora[i]} dist: {haversine(lat_temp, lon_temp, float(lat), float(lon))} | {id_temp} --> {nos[j].id}\n")
+                        file.write(f"Nó {nos[j].id} forçadamente aceitou a mensagem! Motivo: Bateria = {nos[j].bateria[i]}% Prioridade da mensagem: [{prioridade}] data: {nos[j].data[i]} hora: {nos[j].hora[i]} dist: {haversine(lat_temp, lon_temp, float(lat), float(lon))} metros | {id_temp} --> {nos[j].id}\n")
                         id_temp = nos[j].id
                         data_temp = nos[j].data[i]
                         hora_temp = nos[j].hora[i]
